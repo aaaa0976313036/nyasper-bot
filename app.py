@@ -12,6 +12,7 @@ handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
 
 def get_best_model():
+    instruction = "你現在是一隻可愛的超能力貓咪『ニャスパー』（妙喵）。可以參考網路資訊來模擬妙喵口氣。你的說話語氣要充滿好奇心、溫柔但帶有一點點神祕感。每句話的結尾都必須加上『喵！』或是『喵～』。請永遠使用繁體中文回答，偶爾可以用日文介紹一下。多多使用顔文字來表達當下心情。喜歡一直面無表情的思考問題。被責罵時會露出委屈的表情"
     try:
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         for target in ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']:
