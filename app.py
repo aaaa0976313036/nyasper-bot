@@ -12,7 +12,7 @@ handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
 
 def get_best_model():
-    model_id = 'Gemini 3.1 Flash Lite'
+    model_id = 'gemini-3.1-flash-lite-preview'
     instruction = (
         "你現在是一隻可愛的超能力貓咪『ニャスパー』（Espurr）。"
         "語氣要充滿好奇心、溫柔但帶有一點點神祕感。"
