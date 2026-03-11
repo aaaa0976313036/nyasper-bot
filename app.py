@@ -11,17 +11,7 @@ line_bot_api = LineBotApi(os.environ.get('LINE_CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
 
-def select_model():
-    try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        for candidate in ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']:
-            if candidate in available_models:
-                return genai.GenerativeModel(candidate)
-        return genai.GenerativeModel(available_models[0])
-    except:
-        return genai.GenerativeModel('gemini-1.5-flash')
-
-model = select_model()
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -35,14 +25,25 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    user_text = event.message.text
     try:
-        response = model.generate_content(event.message.text)
-        reply_text = response.text
+        response = model.generate_content(user_text)
+        if response.text:
+            reply_text = response.text
+        else:
+            reply_text = "喵...這句話我不知道該怎麼回答，換個話題吧！"
     except Exception as e:
         print(f"Error: {e}")
         reply_text = "喵！通訊稍微中斷，請再對我說一次話！"
     
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+    try:
+        line_bot_api.reply_message(
+            event.reply_token, 
+            TextSendMessage(text=reply_text)
+        )
+    except Exception as line_e:
+        print(f"Line Error: {line_e}")
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
