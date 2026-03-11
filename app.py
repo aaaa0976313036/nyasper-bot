@@ -13,16 +13,7 @@ handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
 
 # 設定大腦模型 - 使用最穩定的名稱
-model = # 嘗試使用多種可能的名稱，直到找到一個能動的
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    # 測試一下大腦
-    model.generate_content('test')
-except:
-    try:
-        model = genai.GenerativeModel('gemini-pro')
-    except Exception as e:
-        print(f"大腦初始化失敗: {e}")
+model = genai.GenerativeModel('gemini-pro')
 
 @app.route("/callback", methods=['POST'])
 def callback():
