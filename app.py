@@ -25,7 +25,7 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     # 這裡就是我的大腦在運作... ニャ
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content(event.message.text)
     line_bot_api.reply_message(
         event.reply_token,
