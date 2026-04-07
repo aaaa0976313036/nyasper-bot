@@ -60,24 +60,40 @@ def callback():
 def handle_message(event):
     try:
         response = model.generate_content(event.message.text)
-        full_text = response.text if response.text else ""       
+        full_text = response.text if response.text else ""
+        
         lines = full_text.split('\n')
         clean_lines = []
-        for line in lines:          
-            if not any(tag in line for tag in ['Thinking state', 'Greeting', 'Addressing', 'Handling', 'Integrating', 'Money', 'Interaction']):               
-                if line.strip() and not re.match(r'^[\*\s\-\d\.]+$', line.strip()):
-                    clean_lines.append(line.strip())
+        user_input = event.message.text.strip()
         
-        reply_text = "\n".join(clean_lines) if clean_lines else full_text        
+        for line in lines:
+            l = line.strip()
+            if not l:
+                continue
+            if '*' in l:
+                continue
+            if l.startswith('Cute psychic cat') or 'Espurr' in l and l.startswith('Cute'):
+                continue
+            if user_input in l and len(l) < len(user_input) + 10:
+                continue
+            if l.startswith('"') and l.endswith('"') and user_input in l:
+                continue
+            
+            clean_lines.append(l)
+        
+        reply_text = "\n".join(clean_lines) if clean_lines else ""
+        
         if not reply_text.strip():
-            reply_text = "喵...我正在面無表情地思考，請再跟我說一次話喵～ (・ω・)"
-       
-    except Exception as e:       
+            reply_text = lines[-1].strip().replace('*', '')
+            
+    except Exception as e:
         print(f"Error: {e}")
         reply_text = "喵！通訊稍微中斷，請再對我說一次話喵！ (・x・)"
     
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+    if not reply_text.strip():
+        reply_text = "喵～(・ω・) 剛才超能力閃神了，能再跟我說一次嗎？喵！"
 
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
