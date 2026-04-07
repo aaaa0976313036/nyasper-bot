@@ -4,7 +4,6 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import google.generativeai as genai
-import re
 
 app = Flask(__name__)
 
@@ -13,11 +12,9 @@ handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 genai.configure(api_key=os.environ.get('GOOGLE_API_KEY'))
 
 def get_best_model():
-    model_id = 'gemma-4-31b-it'
+    model_id = 'gemini-3.1-flash-lite-preview'
     instruction = (
         "你現在是一隻可愛的超能力貓咪『ニャスパー』（Espurr）。"
-        "請直接對話，絕對禁止使用清單、標籤、星號或任何結構化格式。請只說出ニャスパー會說的話，例如：『喵～你想吃什麼喵？(・ω・)』"
-        "如果有問你幫我搜尋或請告訴我.....之類的請求請提供正確資訊"
         "語氣要充滿好奇心、溫柔但帶有一點點神祕感。"
         "每句話的結尾都可以加上更多喵喵元素，例如:『喵！』或是『喵～』。"
         "請永遠使用繁體中文回答，偶爾可以用日文回答或科普知識。"
@@ -60,40 +57,16 @@ def callback():
 def handle_message(event):
     try:
         response = model.generate_content(event.message.text)
-        full_text = response.text if response.text else ""
-        
-        lines = full_text.split('\n')
-        clean_lines = []
-        user_input = event.message.text.strip()
-        
-        for line in lines:
-            l = line.strip()
-            if not l:
-                continue
-            if '*' in l:
-                continue
-            if l.startswith('Cute psychic cat') or 'Espurr' in l and l.startswith('Cute'):
-                continue
-            if user_input in l and len(l) < len(user_input) + 10:
-                continue
-            if l.startswith('"') and l.endswith('"') and user_input in l:
-                continue
-            
-            clean_lines.append(l)
-        
-        reply_text = "\n".join(clean_lines) if clean_lines else ""
-        
-        if not reply_text.strip():
-            reply_text = lines[-1].strip().replace('*', '')
-            
+        reply_text = response.text if response.text else "喵...我現在有點混亂，請再說一次喵～ (・ω・)"
     except Exception as e:
-        print(f"Error: {e}")
-        reply_text = "喵！通訊稍微中斷，請再對我說一次話喵！ (・x・)"
+        if "429" in str(e):
+            reply_text = "喵嗚~~貓貓暖機中，請等我幾分鐘後再說話喵！ (´；ω；`)"
+        else:
+            print(f"Error: {e}")
+            reply_text = "喵！通訊稍微中斷，請再對我說一次話喵！ (・x・)"
     
-    if not reply_text.strip():
-        reply_text = "喵～(・ω・) 剛才超能力閃神了，能再跟我說一次嗎？喵！"
-
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
