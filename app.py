@@ -4,6 +4,7 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import google.generativeai as genai
+import re
 
 app = Flask(__name__)
 
@@ -59,13 +60,21 @@ def callback():
 def handle_message(event):
     try:
         response = model.generate_content(event.message.text)
-        reply_text = response.text if response.text else "喵...我現在有點混亂，請再說一次喵～ (・ω・)"
-    except Exception as e:
-        if "429" in str(e):
-            reply_text = "喵嗚~~貓貓暖機中，請等我幾分鐘後再說話喵！ (´；ω；`)"
-        else:
-            print(f"Error: {e}")
-            reply_text = "喵！通訊稍微中斷，請再對我說一次話喵！ (・x・)"
+        full_text = response.text if response.text else ""       
+        lines = full_text.split('\n')
+        clean_lines = []
+        for line in lines:          
+            if not any(tag in line for tag in ['Thinking state', 'Greeting', 'Addressing', 'Handling', 'Integrating', 'Money', 'Interaction']):               
+                if line.strip() and not re.match(r'^[\*\s\-\d\.]+$', line.strip()):
+                    clean_lines.append(line.strip())
+        
+        reply_text = "\n".join(clean_lines) if clean_lines else full_text        
+        if not reply_text.strip():
+            reply_text = "喵...我正在面無表情地思考，請再跟我說一次話喵～ (・ω・)"
+       
+    except Exception as e:       
+        print(f"Error: {e}")
+        reply_text = "喵！通訊稍微中斷，請再對我說一次話喵！ (・x・)"
     
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
